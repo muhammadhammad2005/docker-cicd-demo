@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-EC2_HOST="54.226.194.10"
+EC2_HOST="54.146.211.124"
 EC2_USER="ubuntu"
 KEY_PATH="~/.ssh/AL-NAFI-CLOUD-LABS-KP.pem"
 IMAGE_NAME="hammad2005/docker-cicd-demo"
