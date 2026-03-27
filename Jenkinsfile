@@ -38,7 +38,7 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                echo 'Pushing to Docker Hub...'
+                echo 'Pushing Docker Hub image...'
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-credentials',
                     usernameVariable: 'DOCKER_USER',
@@ -48,11 +48,21 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to EC2 & Verify') {
+            steps {
+                echo 'Deploying to EC2 and checking app status...'
+                sh """
+                    chmod +x deploy-to-ec2.sh
+                    ./deploy-to-ec2.sh
+                """
+            }
+        }
     }
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo 'Cleaning up local Docker system...'
             sh 'docker system prune -f'
         }
         success {
