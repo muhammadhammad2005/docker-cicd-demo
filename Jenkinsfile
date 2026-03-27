@@ -56,7 +56,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Staging') {
+        stage('Deploy to ec2') {
             steps {
                 echo 'Deploying to staging environment...'
                 sh '''
