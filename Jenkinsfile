@@ -8,6 +8,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo 'Checking out source code...'
@@ -25,10 +26,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                script {
-                    docker.build("${DOCKER_IMAGE}:${BUILD_NUMBER}")
-                    docker.build("${DOCKER_IMAGE}:latest")
-                }
+                sh '''
+                    chmod +x build-docker.sh
+                    ./build-docker.sh
+                '''
             }
         }
 
@@ -36,7 +37,8 @@ pipeline {
             steps {
                 echo 'Running security scan...'
                 sh '''
-                    trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    chmod +x security-scan.sh
+                    ./security-scan.sh ${DOCKER_IMAGE}:${BUILD_NUMBER}
                 '''
             }
         }
@@ -46,26 +48,24 @@ pipeline {
                 echo 'Pushing to Docker Hub...'
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS) {
-                        def image = docker.image("${DOCKER_IMAGE}:${BUILD_NUMBER}")
-                        image.push()
-                        image.push("latest")
-                        def gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                        image.push(gitCommit.take(8))
+                        sh '''
+                            chmod +x push-docker.sh
+                            ./push-docker.sh
+                        '''
                     }
                 }
             }
         }
 
-        stage('Deploy to ec2') {
+        stage('Deploy to EC2') {
             steps {
-                echo 'Deploying to staging environment...'
-                sh '''
-                    docker stop docker-cicd-staging || true
-                    docker rm docker-cicd-staging || true
-                    docker run -d --name docker-cicd-staging -p 3001:3000 ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                    sleep 10
-                    curl -f http://localhost:3001/health || exit 1
-                '''
+                echo 'Deploying to EC2...'
+                sshagent(['ec2-key']) {
+                    sh '''
+                        chmod +x deploy-to-ec2.sh
+                        ./deploy-to-ec2.sh
+                    '''
+                }
             }
         }
     }
