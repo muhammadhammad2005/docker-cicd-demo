@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-EC2_HOST="54.146.211.124"
+EC2_HOST="13.220.55.228"
 EC2_USER="ubuntu"
-KEY_PATH="~/.ssh/AL-NAFI-CLOUD-LABS-KP.pem"
+KEY_PATH="~/.ssh/testing.pem"
 IMAGE_NAME="hammad2005/docker-cicd-demo"
 BUILD_NUMBER=${BUILD_NUMBER:-latest}
 
