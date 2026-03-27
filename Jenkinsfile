@@ -8,6 +8,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo 'Checking out source code...'
@@ -40,7 +41,7 @@ pipeline {
             steps {
                 echo 'Pushing Docker Hub image...'
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
+                    credentialsId: "${DOCKER_CREDENTIALS}",
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
@@ -52,10 +53,12 @@ pipeline {
         stage('Deploy to EC2 & Verify') {
             steps {
                 echo 'Deploying to EC2 and checking app status...'
-                sh """
-                    chmod +x deploy-to-ec2.sh
-                    ./deploy-to-ec2.sh
-                """
+                sshagent(['ec2-key']) {  // Your Jenkins SSH credential ID
+                    sh """
+                        chmod +x deploy-to-ec2.sh
+                        ./deploy-to-ec2.sh
+                    """
+                }
             }
         }
     }
