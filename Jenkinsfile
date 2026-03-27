@@ -8,7 +8,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 echo 'Checking out source code...'
@@ -26,45 +25,26 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh '''
-                    chmod +x build-docker.sh
-                    ./build-docker.sh
-                '''
+                sh './build-docker.sh'
             }
         }
 
         stage('Security Scan') {
             steps {
                 echo 'Running security scan...'
-                sh '''
-                    chmod +x security-scan.sh
-                    ./security-scan.sh ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                '''
+                sh "./security-scan.sh ${DOCKER_IMAGE}:${BUILD_NUMBER}"
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
                 echo 'Pushing to Docker Hub...'
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS) {
-                        sh '''
-                            chmod +x push-docker.sh
-                            ./push-docker.sh
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to EC2') {
-            steps {
-                echo 'Deploying to EC2...'
-                sshagent(['ec2-key']) {
-                    sh '''
-                        chmod +x deploy-to-ec2.sh
-                        ./deploy-to-ec2.sh
-                    '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh './push-docker.sh'
                 }
             }
         }
